@@ -1,5 +1,6 @@
 export interface Video {
     id: string
+    userId?: string | null
     publicId: string
     title: string
     description: string

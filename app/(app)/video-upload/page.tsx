@@ -102,7 +102,6 @@ function VideoUpload() {
           description,
           publicId: cloudJson.public_id,
           originalSize: String(file.size),
-          compressedSize: String((cloudJson.bytes ?? file.size)),
           duration: cloudJson.duration ?? 0,
         })
       } else {

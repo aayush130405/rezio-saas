@@ -19,6 +19,31 @@ interface CloudinaryUploadResult {
     [key: string]: unknown
 }
 
+async function getCompressedVideoSize(publicId: string) {
+    const optimizedUrl = cloudinary.url(publicId, {
+        resource_type: "video",
+        secure: true,
+        transformation: [{ quality: "auto", fetch_format: "mp4" }],
+    })
+
+    const response = await fetch(optimizedUrl, {
+        method: "HEAD",
+        cache: "no-store",
+    })
+
+    if (!response.ok) {
+        return null
+    }
+
+    const contentLength = response.headers.get("content-length")
+    if (!contentLength) {
+        return null
+    }
+
+    const parsed = Number(contentLength)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
 export async function POST(request: NextRequest) {
     const {userId} = await auth()
 
@@ -71,11 +96,14 @@ export async function POST(request: NextRequest) {
 
         const video = await prisma.video.create({
             data: {
+                userId,
                 title,
                 description,
                 publicId: result.public_id,
                 originalSize,
-                compressedSize: String(result.bytes),
+                compressedSize: String(
+                    (await getCompressedVideoSize(result.public_id)) ?? result.bytes ?? Number(originalSize)
+                ),
                 duration: result.duration || 0
             }
         })
